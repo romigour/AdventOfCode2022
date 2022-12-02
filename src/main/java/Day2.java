@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Day2 {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
 
         List<String> inputs = FileReader.read(2);
 
@@ -15,13 +15,37 @@ public class Day2 {
 //        System.out.println(reponse2(inputs));
     }
 
-    private static int reponse1(List<String> inputs) {
+    private static int reponse1(List<String> inputs) throws Exception {
+        int result = 0;
+        for (String input: inputs.stream().filter(s -> !"".equals(s)).toList()) {
+            String play[] = input.replaceAll("[AX]", "1")
+                    .replaceAll("[BY]", "2")
+                    .replaceAll("[CZ]", "3")
+                    .split(" ");
 
-        return 0;
+            result += score(Integer.parseInt(play[0]), Integer.parseInt(play[1]));
+        }
+
+        return result;
     }
 
     private static int reponse2(List<String> inputs) {
 
         return 0;
+    }
+
+    private static int score(int opp, int me) throws Exception{
+        int diff = me - opp;
+        if (diff == 0)
+            return 3 + me;
+        if (diff == 1)
+            return 6 + me;
+        if (diff == 2)
+            return me;
+        if (diff == -2)
+            return 6 + me;
+        if (diff == -1)
+            return me;
+        throw new Exception("CA MARCHE PAS ICI!!!");
     }
 }
