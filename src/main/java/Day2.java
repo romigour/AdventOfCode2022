@@ -59,7 +59,7 @@ public class Day2 {
         return me + result;
     }
 
-    private static int score(int opp, int me) throws Exception{
+    private static int score(int opp, int me) throws Exception {
         int diff = me - opp;
         if (diff == 0)
             return 3 + me;
