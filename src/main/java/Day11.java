@@ -1,8 +1,5 @@
 import util.FileReader;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -11,14 +8,13 @@ public class Day11 {
     static long result = 0;
     static List<Monkey> monkeys = new ArrayList<>();
     static Map<Integer, Integer> compteur = new HashMap<>();
-    static MathContext mc = new MathContext(5);
 
     public static void main(String[] args) throws Exception {
 
         List<String> inputs = FileReader.read(11);
 
-//        System.out.println(reponse1(inputs));
-        System.out.println(reponse2(inputs));
+        System.out.println(reponse1(inputs));
+//        System.out.println(reponse2(inputs));
     }
 
     private static int reponse1(List<String> inputs) {
@@ -43,7 +39,7 @@ public class Day11 {
         parsing(inputs);
 
         // traitement
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10000; i++) {
             traitement(false);
         }
 
@@ -60,10 +56,10 @@ public class Day11 {
                 monkeys.get(m).items.set(i, doOperation(monkeys.get(m).items.get(i), monkeys.get(m)));
 
                 // step 2: division by 3
-                BigDecimal val = divByThree ? new BigDecimal(monkeys.get(m).items.get(i).intValue() / 3) : monkeys.get(m).items.get(i);
+                long val = divByThree ? monkeys.get(m).items.get(i) / 3 : monkeys.get(m).items.get(i);
                 monkeys.get(m).items.set(i, val);
                 // step 3: le test
-                if (val.remainder(monkeys.get(m).valueTest).compareTo(BigDecimal.ZERO) == 0) {
+                if (val % monkeys.get(m).valueTest == 0) {
                     // true
                     monkeys.get(monkeys.get(m).monkeyIfTrue).items.add(val);
                 } else {
@@ -91,18 +87,18 @@ public class Day11 {
             String values = inputs.get(i + 1).replace("  Starting items: ", "");
             arrayValues = values.split(", ");
             for (String s: arrayValues) {
-                monkey.items.add(new BigDecimal(s));
+                monkey.items.add(Long.parseLong(s));
             }
 
             // Operation
             values = inputs.get(i + 2).replace("  Operation: new = ", "");
             arrayValues = values.split(" ");
             monkey.ope = Operateur.getOperateur(arrayValues[1]);
-            monkey.valueOpe = arrayValues[2].equals("old") ? null : new BigDecimal(arrayValues[2]);
+            monkey.valueOpe = arrayValues[2].equals("old") ? -1 : Integer.parseInt(arrayValues[2]);
 
             // Test
             values = inputs.get(i + 3).replace("  Test: divisible by ", "");
-            monkey.valueTest = new BigDecimal(values);
+            monkey.valueTest = Integer.parseInt(values);
 
             // Si true
             values = inputs.get(i + 4).replace("    If true: throw to monkey ", "");
@@ -116,34 +112,34 @@ public class Day11 {
         }
     }
 
-    private static BigDecimal doOperation(BigDecimal item, Monkey monkey) {
+    private static long doOperation(long item, Monkey monkey) {
         switch (monkey.ope) {
             case PLUS -> {
-                if (monkey.valueOpe != null) {
-                    return item.add(monkey.valueOpe);
+                if (monkey.valueOpe > 0) {
+                    return item + monkey.valueOpe;
                 } else {
-                    return item.add(item);
+                    return item + item;
                 }
             }
             case MOINS -> {
-                if (monkey.valueOpe != null) {
-                    return item.subtract(monkey.valueOpe);
+                if (monkey.valueOpe > 0) {
+                    return item - monkey.valueOpe;
                 } else {
-                    return new BigDecimal(0);
+                    return 0;
                 }
             }
             case MULTIPLIER -> {
-                if (monkey.valueOpe != null) {
-                    return item.multiply(monkey.valueOpe);
+                if (monkey.valueOpe > 0) {
+                    return item * monkey.valueOpe;
                 } else {
-                    return item.multiply(item);
+                    return item * item;
                 }
             }
             case DIVISER -> {
-                if (monkey.valueOpe != null) {
-                    return new BigDecimal((item.intValue() / monkey.valueOpe.intValue()));
+                if (monkey.valueOpe > 0) {
+                    return item / monkey.valueOpe;
                 } else {
-                    return new BigDecimal(1);
+                    return 1;
                 }
             }
         }
@@ -152,10 +148,10 @@ public class Day11 {
 
     static class Monkey {
         long id;
-        List<BigDecimal> items = new ArrayList<>();
+        List<Long> items = new ArrayList<>();
         Operateur ope;
-        BigDecimal valueOpe;
-        BigDecimal valueTest;
+        long valueOpe;
+        long valueTest;
         int monkeyIfTrue;
         int monkeyIfFalse;
 
