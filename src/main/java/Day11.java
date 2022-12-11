@@ -1,8 +1,8 @@
 import util.FileReader;
 
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Day11 {
     static long result = 0;
@@ -13,8 +13,8 @@ public class Day11 {
 
         List<String> inputs = FileReader.read(11);
 
-        System.out.println(reponse1(inputs));
-//        System.out.println(reponse2(inputs));
+//        System.out.println(reponse1(inputs));
+        System.out.println(reponse2(inputs));
     }
 
     private static int reponse1(List<String> inputs) {
@@ -24,7 +24,7 @@ public class Day11 {
 
         // traitement
         for (int i = 0; i < 20; i++) {
-            traitement(true);
+            traitement(true, null);
         }
 
         List<Integer> listResult = new ArrayList<>(compteur.values());
@@ -38,9 +38,20 @@ public class Day11 {
         // parsing
         parsing(inputs);
 
+        // https://www.baeldung.com/java-least-common-multiple
+        BigInteger lcm = null;
+        for (int m = 0; m < monkeys.size(); m++) {
+            if (lcm == null) {
+                lcm = monkeys.get(m).valueTest;
+            } else {
+                lcm = lcm(lcm, monkeys.get(m).valueTest);
+            }
+        }
+
+
         // traitement
         for (int i = 0; i < 10000; i++) {
-            traitement(false);
+            traitement(false, lcm);
         }
 
         List<Integer> listResult = new ArrayList<>(compteur.values());
@@ -49,17 +60,32 @@ public class Day11 {
         return (long) listResult.get(0) * listResult.get(1);
     }
 
-    static void traitement(boolean divByThree) {
+    public static BigInteger lcm(BigInteger number1, BigInteger number2) {
+        BigInteger absHigherNumber = number1.intValue() > number2.intValue() ? number1 : number2;
+        BigInteger absLowerNumber = number1.intValue() < number2.intValue() ? number1 : number2;
+        BigInteger lcm = absHigherNumber;
+        while (lcm.mod(absLowerNumber).intValue() != 0) {
+            lcm = lcm.add(absHigherNumber);
+        }
+        return lcm;
+    }
+
+    static void traitement(boolean divByThree, BigInteger lcm) {
         for (int m = 0; m < monkeys.size(); m++) {
             for (int i = 0; i <  monkeys.get(m).items.size(); i++) {
                 // step 1 : worry level
                 monkeys.get(m).items.set(i, doOperation(monkeys.get(m).items.get(i), monkeys.get(m)));
 
                 // step 2: division by 3
-                long val = divByThree ? monkeys.get(m).items.get(i) / 3 : monkeys.get(m).items.get(i);
+                BigInteger val = divByThree ? BigInteger.valueOf(monkeys.get(m).items.get(i).intValue() / 3) : monkeys.get(m).items.get(i);
                 monkeys.get(m).items.set(i, val);
+
+                if (lcm != null && val.intValue() > lcm.intValue()) {
+                    val = val.mod(lcm);
+                }
+
                 // step 3: le test
-                if (val % monkeys.get(m).valueTest == 0) {
+                if (val.remainder(monkeys.get(m).valueTest).compareTo(BigInteger.ZERO) == 0) {
                     // true
                     monkeys.get(monkeys.get(m).monkeyIfTrue).items.add(val);
                 } else {
@@ -87,18 +113,18 @@ public class Day11 {
             String values = inputs.get(i + 1).replace("  Starting items: ", "");
             arrayValues = values.split(", ");
             for (String s: arrayValues) {
-                monkey.items.add(Long.parseLong(s));
+                monkey.items.add(new BigInteger(s));
             }
 
             // Operation
             values = inputs.get(i + 2).replace("  Operation: new = ", "");
             arrayValues = values.split(" ");
             monkey.ope = Operateur.getOperateur(arrayValues[1]);
-            monkey.valueOpe = arrayValues[2].equals("old") ? -1 : Integer.parseInt(arrayValues[2]);
+            monkey.valueOpe = arrayValues[2].equals("old") ? null : new BigInteger(arrayValues[2]);
 
             // Test
             values = inputs.get(i + 3).replace("  Test: divisible by ", "");
-            monkey.valueTest = Integer.parseInt(values);
+            monkey.valueTest = new BigInteger(values);
 
             // Si true
             values = inputs.get(i + 4).replace("    If true: throw to monkey ", "");
@@ -112,34 +138,35 @@ public class Day11 {
         }
     }
 
-    private static long doOperation(long item, Monkey monkey) {
+    private static BigInteger doOperation(BigInteger item, Monkey monkey) {
         switch (monkey.ope) {
             case PLUS -> {
-                if (monkey.valueOpe > 0) {
-                    return item + monkey.valueOpe;
+                if (monkey.valueOpe != null) {
+                    return item.add(monkey.valueOpe);
                 } else {
-                    return item + item;
+                    return item.add(item);
                 }
             }
             case MOINS -> {
-                if (monkey.valueOpe > 0) {
-                    return item - monkey.valueOpe;
+                if (monkey.valueOpe != null) {
+                    return item.subtract(monkey.valueOpe);
                 } else {
-                    return 0;
+                    return BigInteger.valueOf(0);
                 }
             }
             case MULTIPLIER -> {
-                if (monkey.valueOpe > 0) {
-                    return item * monkey.valueOpe;
+                if (monkey.valueOpe != null) {
+                    return item.multiply(monkey.valueOpe);
                 } else {
-                    return item * item;
+                    return item.multiply(item);
                 }
             }
             case DIVISER -> {
-                if (monkey.valueOpe > 0) {
-                    return item / monkey.valueOpe;
+                if (monkey.valueOpe != null) {
+//                    return new BigInteger((item.intValue() / monkey.valueOpe.intValue()));
+                    return item.divide(monkey.valueOpe);
                 } else {
-                    return 1;
+                    return BigInteger.valueOf(1);
                 }
             }
         }
@@ -148,10 +175,10 @@ public class Day11 {
 
     static class Monkey {
         long id;
-        List<Long> items = new ArrayList<>();
+        List<BigInteger> items = new ArrayList<>();
         Operateur ope;
-        long valueOpe;
-        long valueTest;
+        BigInteger valueOpe;
+        BigInteger valueTest;
         int monkeyIfTrue;
         int monkeyIfFalse;
 
